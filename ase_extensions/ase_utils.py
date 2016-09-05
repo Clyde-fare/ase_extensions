@@ -992,6 +992,10 @@ def run_on_server(func_master, *args, **kwargs):
     except KeyError:
         savefiles = ''
 
+    try: 
+        namefile_f = kwargs.pop('namefile_f')
+    except KeyError:
+        namefile_f = lambda e: name
     try:
         compress = kwargs.pop('compress')
     except KeyError:
