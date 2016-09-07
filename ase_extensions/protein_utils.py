@@ -15,7 +15,7 @@ import random
 import string
 import warnings
 from IPython.display import display
-from IPython.html.widgets import FloatProgress
+from ipywidgets import FloatProgress
 
 try:
     from chemview import MolecularViewer, enable_notebook
