@@ -98,6 +98,14 @@ def get_latest_restart_name(file_n, ssh=None):
     except IndexError:
         return file_n
 
+
+def get_latest_restart_local(file_n):
+    i,o,e = ssh.exec_command('ls {fn}_restart_{{?,??}}.log'.format(fn=file_n.replace('.log', '')))
+    ls_output = o.readlines()
+    clean_ls = [fn.strip() for fn in ls_output]
+    clean_ls.sort(key=lambda fn: int(re.search('[0-9]+.log', fn).group().replace('.log' , '')))
+    return clean_ls[-1]
+
 def gen_fchk(mol_nm, ssh=False):
     """generates fchk file from chk point file for the molecule specified
     assumes chk point file exists in the scratch directory"""
@@ -251,14 +259,19 @@ def check_calcs(list_mols, max_restart=False, depth='medium', sort=False, frc=Fa
     except IndexError:
         raise RuntimeError('Not running from within ASE_HOME')
 
+    home_files = [mol.calc.label + '.log' for mol in list_mols]
+    serv_files = [scratch_dir + '/' + fn for fn in home_files]
+
     if depth == 'light':
+        if max_restart:
+            home_files = [get_latest_restart_local(file_n) for file_n in home_files]
+            for i, mol in enumerate(list_mols):
+                mol.calc.label = home_files[i].replace('.log','')
+
         for mol in list_mols:
             mol.calc.reset_cached_data()
             mol.calc.read()
         return
-
-    home_files = [mol.calc.label + '.log' for mol in list_mols]
-    serv_files = [scratch_dir + '/' + fn for fn in home_files]
 
     if max_restart:
         ssh = remote.connect_server(ssh=True)
